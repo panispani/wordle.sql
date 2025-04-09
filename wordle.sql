@@ -37,7 +37,7 @@ CREATE TABLE guesses (
 
 -- Scoreboard
 CREATE TABLE high_score (
-    name TEXT,
+    player_name TEXT,
     guesses INT,
     achieved_at TIMESTAMP DEFAULT NOW()
 );
@@ -118,6 +118,25 @@ Your guess: ';
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function to get high score information
+CREATE OR REPLACE FUNCTION get_high_score_info()
+RETURNS TEXT AS $$
+DECLARE
+    best_score RECORD;
+BEGIN
+    SELECT player_name, guesses, achieved_at INTO best_score
+    FROM high_score
+    ORDER BY guesses ASC, achieved_at DESC
+    LIMIT 1;
+    
+    IF best_score IS NULL THEN
+        RETURN 'No high scores yet!';
+    END IF;
+    
+    RETURN '🏆 High Score: ' || best_score.player_name || ' (' || best_score.guesses || ' guesses)';
+END;
+$$ LANGUAGE plpgsql;
+
 -- Main game function
 CREATE OR REPLACE FUNCTION play_game(input TEXT)
 RETURNS TEXT AS $$
@@ -129,6 +148,7 @@ DECLARE
     feedback TEXT := '';
     guess_count INT;
     best_guess INT;
+    high_score_info TEXT;
 BEGIN
     -- Convert input to uppercase for consistent handling
     input := UPPER(input);
@@ -136,6 +156,9 @@ BEGIN
     -- Get current game state
     SELECT state, attempts_left, is_high_score INTO current_state, attempts, is_high
     FROM game_state;
+    
+    -- Get high score info
+    high_score_info := get_high_score_info();
     
     -- Initial state (first run)
     IF current_state = 'INITIAL' THEN
@@ -152,20 +175,23 @@ BEGIN
         -- In WON state, we can only restart or save name if high score
         IF is_high = TRUE THEN
             SELECT COUNT(*) INTO guess_count FROM guesses;
-            INSERT INTO high_score(name, guesses)
-            VALUES (SUBSTRING(input FROM 6), guess_count);
+            INSERT INTO high_score(player_name, guesses)
+            VALUES (input, guess_count);
             
             -- Update state to indicate name was saved
             UPDATE game_state SET is_high_score = FALSE;
-            
-            RETURN '🏆 Score saved! Type RESTART to play again.';
+            high_score_info := get_high_score_info();
+            RETURN 'Score saved! ' || high_score_info || '
+Type RESTART to play again.';
         ELSE
-            RETURN 'You already won! Type RESTART to play again.';
+            RETURN 'You already won! ' || high_score_info || '
+Type RESTART to play again.';
         END IF;
     END IF;
     
     IF current_state = 'LOST' THEN
-        RETURN 'Game over! Type RESTART to play again.';
+        RETURN 'Game over! Better luck next time! ' || high_score_info || '
+Type RESTART to play again.';
     END IF;
     
     -- PLAYING state logic
@@ -210,6 +236,7 @@ That''s a high score! Enter your name: ';
         ELSE
             UPDATE game_state SET state = 'WON', is_high_score = FALSE;
             RETURN '🟩🟩🟩🟩🟩 🎉 Congratulations! You won in ' || guess_count || ' guesses!
+' || high_score_info || '
 Type RESTART to play again.';
         END IF;
     END IF;
@@ -222,6 +249,7 @@ Type RESTART to play again.';
         UPDATE game_state SET state = 'LOST';
         RETURN feedback || ' ❌ Game over! You''re out of attempts.
 The word was: ' || word || '
+Better luck next time! ' || high_score_info || '
 Type RESTART to try again.';
     END IF;
     
