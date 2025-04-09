@@ -128,11 +128,11 @@ BEGIN
     FROM high_score
     ORDER BY guesses ASC, achieved_at DESC
     LIMIT 1;
-    
+
     IF best_score IS NULL THEN
         RETURN 'No high scores yet!';
     END IF;
-    
+
     RETURN '🏆 High Score: ' || best_score.player_name || ' (' || best_score.guesses || ' guesses)';
 END;
 $$ LANGUAGE plpgsql;
@@ -159,7 +159,7 @@ BEGIN
     
     -- Get high score info
     high_score_info := get_high_score_info();
-    
+
     -- Initial state (first run)
     IF current_state = 'INITIAL' THEN
         RETURN welcome_message();
