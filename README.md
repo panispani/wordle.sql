@@ -56,6 +56,14 @@ SELECT * FROM high_score;
 
 ## Run this
 
+One liner:
+
+```bash
+psql -d postgres -f wordle.sql > /dev/null 2>&1; psql -At -d postgres -c "SELECT play_game('')"; while read g; do psql -At -d postgres -c "SELECT play_game('$g')"; done
+```
+
+A more readable but minimal game loop in bash
+
 ```bash
 ./play.sh
 ```
