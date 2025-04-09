@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Initialize the game
-psql -d postgres -f init_game.sql > /dev/null 2>&1
+psql -d postgres -f wordle.sql > /dev/null 2>&1
 
 echo "Welcome to SQL Wordle!"
 echo "Guess the 5-letter word. Type EXIT to quit."
