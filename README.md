@@ -52,7 +52,17 @@ SELECT * FROM high_score;
 
 ## Run in Docker container
 
-<TODO>
+Build the image:
+
+```bash
+docker build -t sql-wordle .
+```
+
+Run the game:
+
+```
+docker run --rm -it sql-wordle
+```
 
 ## Run this
 

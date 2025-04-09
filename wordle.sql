@@ -14,7 +14,7 @@ CREATE TABLE words (
     word TEXT PRIMARY KEY CHECK (LENGTH(word) = 5)
 );
 -- PostgreSQL specific command
-\copy words FROM 'data/words.txt'
+\copy words FROM 'words.txt'
 
 -- Game state
 CREATE TABLE game_state (
